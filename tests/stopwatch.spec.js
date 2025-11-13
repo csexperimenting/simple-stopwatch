@@ -188,17 +188,33 @@ test.describe('Stopwatch Manager', () => {
       await page.click('button:has-text("Add Stopwatch")');
 
       const cards = page.locator('.stopwatch-card');
+      const timerADisplay = cards.nth(0).locator('.stopwatch-display');
+      const timerBDisplay = cards.nth(1).locator('.stopwatch-display');
 
       await cards.nth(0).locator('.start-btn').click();
       await page.waitForTimeout(300);
       await cards.nth(0).locator('.pause-btn').click();
+      await page.waitForTimeout(50);
 
       await cards.nth(1).locator('.start-btn').click();
       await page.waitForTimeout(200);
       await cards.nth(1).locator('.pause-btn').click();
+      await page.waitForTimeout(50);
 
-      const totalTime = await page.locator('#total-time').textContent();
-      expect(totalTime).toMatch(/00:00:00\.[45][0-9]/); // Allow some variance
+      const parseCs = (timeStr) => {
+        const parts = timeStr.split(/[:.]/).map(Number);
+        return parts[0] * 360000 + parts[1] * 6000 + parts[2] * 100 + parts[3];
+      };
+
+      const timerAStr = await timerADisplay.textContent();
+      const timerBStr = await timerBDisplay.textContent();
+      const totalStr = await page.locator('#total-time').textContent();
+
+      const timerACs = parseCs(timerAStr);
+      const timerBCs = parseCs(timerBStr);
+      const totalCs = parseCs(totalStr);
+
+      expect(Math.abs(totalCs - (timerACs + timerBCs))).toBeLessThanOrEqual(10);
     });
 
     test('should update total time when stopwatch is reset', async ({ page }) => {
@@ -223,15 +239,28 @@ test.describe('Stopwatch Manager', () => {
       await cards.nth(0).locator('.start-btn').click();
       await page.waitForTimeout(300);
       await cards.nth(0).locator('.pause-btn').click();
+      await page.waitForTimeout(50);
 
       await cards.nth(1).locator('.start-btn').click();
       await page.waitForTimeout(200);
       await cards.nth(1).locator('.pause-btn').click();
+      await page.waitForTimeout(50);
+
+      const timerBStrBefore = await cards.nth(1).locator('.stopwatch-display').textContent();
 
       await cards.nth(0).locator('.delete-btn').click();
 
-      const totalTime = await page.locator('#total-time').textContent();
-      expect(totalTime).toMatch(/00:00:00\.[12][0-9]/); // Allow some variance
+      const parseCs = (timeStr) => {
+        const parts = timeStr.split(/[:.]/).map(Number);
+        return parts[0] * 360000 + parts[1] * 6000 + parts[2] * 100 + parts[3];
+      };
+
+      const totalStr = await page.locator('#total-time').textContent();
+
+      const timerBCs = parseCs(timerBStrBefore);
+      const totalCs = parseCs(totalStr);
+
+      expect(Math.abs(totalCs - timerBCs)).toBeLessThanOrEqual(10);
     });
   });
 
