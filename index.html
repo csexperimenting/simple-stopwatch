@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stopwatch Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .add-stopwatch-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .add-stopwatch-section input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .add-stopwatch-section input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .add-stopwatch-section button {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: 600;
+        }
+
+        .add-stopwatch-section button:hover {
+            transform: translateY(-2px);
+        }
+
+        .add-stopwatch-section button:active {
+            transform: translateY(0);
+        }
+
+        .stopwatches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stopwatch-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stopwatch-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .stopwatch-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+            text-align: center;
+            word-wrap: break-word;
+        }
+
+        .stopwatch-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stopwatch-controls {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .stopwatch-controls button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .start-btn {
+            background: #4caf50;
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: #45a049;
+        }
+
+        .pause-btn {
+            background: #ff9800;
+            color: white;
+        }
+
+        .pause-btn:hover {
+            background: #e68900;
+        }
+
+        .reset-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background: #da190b;
+        }
+
+        .delete-btn {
+            width: 100%;
+            padding: 0.5rem;
+            background: #9e9e9e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-weight: 600;
+        }
+
+        .delete-btn:hover {
+            background: #757575;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            padding: 3rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .add-stopwatch-section {
+                flex-direction: column;
+            }
+
+            .add-stopwatch-section button {
+                width: 100%;
+            }
+
+            .stopwatches-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⏱️ Stopwatch Manager</h1>
+        
+        <div class="add-stopwatch-section">
+            <input 
+                type="text" 
+                id="stopwatchTitle" 
+                placeholder="Enter stopwatch title..."
+                maxlength="50"
+            >
+            <button onclick="addStopwatch()">Add Stopwatch</button>
+        </div>
+
+        <div id="stopwatchesContainer" class="stopwatches-grid">
+            <div class="empty-state">
+                No stopwatches yet. Add one above to get started!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stopwatches = [];
+        let nextId = 1;
+
+        class Stopwatch {
+            constructor(id, title) {
+                this.id = id;
+                this.title = title;
+                this.time = 0;
+                this.isRunning = false;
+                this.interval = null;
+            }
+
+            start() {
+                if (!this.isRunning) {
+                    this.isRunning = true;
+                    this.interval = setInterval(() => {
+                        this.time += 10;
+                        this.updateDisplay();
+                    }, 10);
+                }
+            }
+
+            pause() {
+                if (this.isRunning) {
+                    this.isRunning = false;
+                    clearInterval(this.interval);
+                }
+            }
+
+            reset() {
+                this.pause();
+                this.time = 0;
+                this.updateDisplay();
+            }
+
+            formatTime() {
+                const milliseconds = Math.floor((this.time % 1000) / 10);
+                const seconds = Math.floor((this.time / 1000) % 60);
+                const minutes = Math.floor((this.time / (1000 * 60)) % 60);
+                const hours = Math.floor(this.time / (1000 * 60 * 60));
+
+                const pad = (num) => num.toString().padStart(2, '0');
+
+                return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(milliseconds)}`;
+            }
+
+            updateDisplay() {
+                const displayElement = document.getElementById(`display-${this.id}`);
+                if (displayElement) {
+                    displayElement.textContent = this.formatTime();
+                }
+            }
+        }
+
+        function addStopwatch() {
+            const titleInput = document.getElementById('stopwatchTitle');
+            const title = titleInput.value.trim();
+
+            if (!title) {
+                alert('Please enter a title for the stopwatch');
+                return;
+            }
+
+            const stopwatch = new Stopwatch(nextId++, title);
+            stopwatches.push(stopwatch);
+            titleInput.value = '';
+            renderStopwatches();
+        }
+
+        function startStopwatch(id) {
+            const stopwatch = stopwatches.find(sw => sw.id === id);
+            if (stopwatch) {
+                stopwatch.start();
+            }
+        }
+
+        function pauseStopwatch(id) {
+            const stopwatch = stopwatches.find(sw => sw.id === id);
+            if (stopwatch) {
+                stopwatch.pause();
+            }
+        }
+
+        function resetStopwatch(id) {
+            const stopwatch = stopwatches.find(sw => sw.id === id);
+            if (stopwatch) {
+                stopwatch.reset();
+            }
+        }
+
+        function deleteStopwatch(id) {
+            const stopwatch = stopwatches.find(sw => sw.id === id);
+            if (stopwatch) {
+                stopwatch.pause();
+            }
+            stopwatches = stopwatches.filter(sw => sw.id !== id);
+            renderStopwatches();
+        }
+
+        function renderStopwatches() {
+            const container = document.getElementById('stopwatchesContainer');
+
+            if (stopwatches.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        No stopwatches yet. Add one above to get started!
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = stopwatches.map(sw => `
+                <div class="stopwatch-card">
+                    <div class="stopwatch-title">${escapeHtml(sw.title)}</div>
+                    <div class="stopwatch-display" id="display-${sw.id}">${sw.formatTime()}</div>
+                    <div class="stopwatch-controls">
+                        <button class="start-btn" onclick="startStopwatch(${sw.id})">Start</button>
+                        <button class="pause-btn" onclick="pauseStopwatch(${sw.id})">Pause</button>
+                        <button class="reset-btn" onclick="resetStopwatch(${sw.id})">Reset</button>
+                    </div>
+                    <button class="delete-btn" onclick="deleteStopwatch(${sw.id})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Allow adding stopwatch with Enter key
+        document.getElementById('stopwatchTitle').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addStopwatch();
+            }
+        });
+
+        // Initial render
+        renderStopwatches();
+    </script>
+</body>
+</html>
