@@ -182,6 +182,30 @@
             opacity: 0.8;
         }
 
+        .total-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .total-label {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .total-display {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -208,6 +232,11 @@
 <body>
     <div class="container">
         <h1>⏱️ Stopwatch Manager</h1>
+        
+        <div class="total-bar">
+            <span class="total-label">Total Time</span>
+            <span class="total-display" id="total-time">00:00:00.00</span>
+        </div>
         
         <div class="add-stopwatch-section">
             <input 
@@ -278,6 +307,29 @@
                 if (displayElement) {
                     displayElement.textContent = this.formatTime();
                 }
+                updateTotalTimeDisplay();
+            }
+        }
+
+        function formatMs(ms) {
+            const milliseconds = Math.floor((ms % 1000) / 10);
+            const seconds = Math.floor((ms / 1000) % 60);
+            const minutes = Math.floor((ms / (1000 * 60)) % 60);
+            const hours = Math.floor(ms / (1000 * 60 * 60));
+
+            const pad = (num) => num.toString().padStart(2, '0');
+
+            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(milliseconds)}`;
+        }
+
+        function calculateTotalTimeMs() {
+            return stopwatches.reduce((sum, sw) => sum + sw.time, 0);
+        }
+
+        function updateTotalTimeDisplay() {
+            const el = document.getElementById('total-time');
+            if (el) {
+                el.textContent = formatMs(calculateTotalTimeMs());
             }
         }
 
@@ -294,6 +346,7 @@
             stopwatches.push(stopwatch);
             titleInput.value = '';
             renderStopwatches();
+            updateTotalTimeDisplay();
         }
 
         function pauseAllExcept(id) {
@@ -310,6 +363,7 @@
             if (stopwatch) {
                 stopwatch.start();
             }
+            updateTotalTimeDisplay();
         }
 
         function pauseStopwatch(id) {
@@ -317,6 +371,7 @@
             if (stopwatch) {
                 stopwatch.pause();
             }
+            updateTotalTimeDisplay();
         }
 
         function resetStopwatch(id) {
@@ -324,6 +379,7 @@
             if (stopwatch) {
                 stopwatch.reset();
             }
+            updateTotalTimeDisplay();
         }
 
         function deleteStopwatch(id) {
@@ -333,6 +389,7 @@
             }
             stopwatches = stopwatches.filter(sw => sw.id !== id);
             renderStopwatches();
+            updateTotalTimeDisplay();
         }
 
         function renderStopwatches() {
@@ -344,6 +401,7 @@
                         No stopwatches yet. Add one above to get started!
                     </div>
                 `;
+                updateTotalTimeDisplay();
                 return;
             }
 
@@ -359,6 +417,7 @@
                     <button class="delete-btn" onclick="deleteStopwatch(${sw.id})">Delete</button>
                 </div>
             `).join('');
+            updateTotalTimeDisplay();
         }
 
         function escapeHtml(text) {
