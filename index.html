@@ -296,7 +296,16 @@
             renderStopwatches();
         }
 
+        function pauseAllExcept(id) {
+            stopwatches.forEach(sw => {
+                if (sw.id !== id) {
+                    sw.pause();
+                }
+            });
+        }
+
         function startStopwatch(id) {
+            pauseAllExcept(id);
             const stopwatch = stopwatches.find(sw => sw.id === id);
             if (stopwatch) {
                 stopwatch.start();
